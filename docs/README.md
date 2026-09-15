@@ -81,7 +81,3 @@ npm run test:e2e    # end-to-end test over real HTTP, covering the whole contrac
 ```
 
 What each proves is documented in `docs/week3-full-stack-delivery.md` under "The Required Guarantees."
-
-## Not yet in scope
-
-No login/identity system (a lightweight header-based actor stands in for it this milestone — see `docs/week3-full-stack-delivery.md`), no external integrations, no runtime AI/RAG/MCP, no CI/CD, no deployment, and no production monitoring infrastructure.
