@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import * as request from 'supertest';
+import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { RequestsModule } from '../src/requests/requests.module';
 import { ServiceRequest } from '../src/requests/entities/service-request.entity';
 import { StatusEvent } from '../src/requests/entities/status-event.entity';
@@ -94,7 +95,7 @@ describe('Service Request flow (e2e)', () => {
       .expect(404);
   });
 
-  it('AUTHORIZATION — allows the owning department staff to start the request (200)', async () => {
+  it('AUTHORIZATION — allows the owning department staff to start the request (201)', async () => {
     const res = await request(app.getHttpServer())
       .post(`/requests/${requestId}/start`)
       .set('x-actor-role', 'staff')

@@ -53,7 +53,7 @@ export class RequestsService {
   }
 
   findAll(): Promise<ServiceRequest[]> {
-    return this.requests.find({ order: { createdAt: 'ASC' } });
+    return this.requests.find({ order: { createdAt: 'DESC' } });
   }
 
   async findOne(id: string): Promise<ServiceRequest> {

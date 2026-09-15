@@ -26,6 +26,9 @@ export default function App() {
 
   const actor: Actor =
     actorRole === 'staff' ? { role: 'staff', department: actorDepartment } : { role: 'employee', department: null };
+  const departmentMismatch = actorRole === 'staff' && actorDepartment !== department;
+  const departmentMismatchMessage = `${actorDepartment} staff cannot submit a request for ${department}. Select ${actorDepartment} or change the staff department.`;
+  const formatDateTime = (value: string) => new Date(value).toLocaleString();
 
   async function refresh() {
     try {
@@ -43,6 +46,10 @@ export default function App() {
     e.preventDefault();
     setError(null);
     setNotice(null);
+    if (departmentMismatch) {
+      setError(departmentMismatchMessage);
+      return;
+    }
     try {
       await createRequest(title, department);
       setTitle('');
@@ -79,80 +86,136 @@ export default function App() {
 
   return (
     <div style={{ maxWidth: 720, margin: '2rem auto', fontFamily: 'sans-serif', padding: '0 1rem' }}>
-      <h1>Internal Operations Service Hub</h1>
+      <h1 style={{ fontSize: '2.25rem', lineHeight: 1.2, fontWeight: 800, margin: '0 0 1rem' }}>Internal Operations Service Hub</h1>
 
-      <section style={{ border: '1px solid #ddd', borderRadius: 8, padding: 16, marginBottom: 24 }}>
-        <h2>Acting as</h2>
-        <p style={{ fontSize: 13, color: '#666' }}>
-          No login system yet (out of scope this milestone) — this switches the identity headers sent with each
-          action, so you can see the authorization rule allow and deny in real time.
-        </p>
-        <label>
-          Role:{' '}
-          <select value={actorRole} onChange={(e) => setActorRole(e.target.value as 'employee' | 'staff')}>
-            <option value="employee">Employee</option>
-            <option value="staff">Department staff</option>
-          </select>
-        </label>{' '}
-        {actorRole === 'staff' && (
-          <label>
-            Department:{' '}
-            <select value={actorDepartment} onChange={(e) => setActorDepartment(e.target.value as Department)}>
-              {DEPARTMENTS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
+      <section style={{ border: '1px solid #d0d0d0', borderRadius: 10, padding: '1rem 1.1rem', marginBottom: 26, background: '#f8f8f8' }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
+          <label style={{ fontSize: 15, fontWeight: 600 }}>
+            Role:{' '}
+            <select
+              value={actorRole}
+              onChange={(e) => setActorRole(e.target.value as 'employee' | 'staff')}
+              style={{
+                fontSize: 15,
+                padding: '6px 10px',
+                border: '1px solid #b9b9b9',
+                borderRadius: 4,
+                background: '#fff',
+              }}
+            >
+              <option value="employee">Employee</option>
+              <option value="staff">Department staff</option>
             </select>
           </label>
-        )}
-      </section>
-
-      <section style={{ border: '1px solid #ddd', borderRadius: 8, padding: 16, marginBottom: 24 }}>
-        <h2>Submit a request</h2>
-        <form onSubmit={onCreate} style={{ display: 'flex', gap: 8 }}>
+          {actorRole === 'staff' && (
+            <label style={{ fontSize: 15, fontWeight: 600 }}>
+              Department:{' '}
+              <select
+                value={actorDepartment}
+                onChange={(e) => setActorDepartment(e.target.value as Department)}
+                style={{
+                  fontSize: 15,
+                  padding: '6px 10px',
+                  border: '1px solid #b9b9b9',
+                  borderRadius: 4,
+                  background: '#fff',
+                }}
+              >
+                {DEPARTMENTS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+        <h2 style={{ fontSize: '1.7rem', margin: '0 0 0.75rem', fontWeight: 700 }}>Submit a request</h2>
+        <form onSubmit={onCreate} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
-            style={{ flex: 1 }}
+            style={{ flex: 1, fontSize: 15, padding: '10px 12px', border: '1px solid #b9b9b9', borderRadius: 4 }}
             placeholder="e.g. Laptop wont turn on"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
-          <select value={department} onChange={(e) => setDepartment(e.target.value as Department)}>
+          <select
+            value={department}
+            onChange={(e) => setDepartment(e.target.value as Department)}
+            style={{
+              fontSize: 15,
+              padding: '10px 12px',
+              border: '1px solid #b9b9b9',
+              borderRadius: 4,
+              background: '#fff',
+            }}
+          >
             {DEPARTMENTS.map((d) => (
               <option key={d} value={d}>
                 {d}
               </option>
             ))}
           </select>
-          <button type="submit">Submit</button>
+          <button
+            type="submit"
+            disabled={departmentMismatch}
+            style={{
+              fontSize: 15,
+              padding: '10px 18px',
+              border: '1px solid #b9b9b9',
+              borderRadius: 4,
+              background: '#f3f3f3',
+              opacity: departmentMismatch ? 0.55 : 1,
+              cursor: departmentMismatch ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Submit
+          </button>
         </form>
       </section>
 
-      {error && <p style={{ color: '#b00020' }}>Error: {error}</p>}
-      {notice && <p style={{ color: '#1a7a1a' }}>{notice}</p>}
+      {(departmentMismatch || error) && (
+        <p style={{ color: '#b00020', fontSize: '1.1rem', fontWeight: 700, margin: '0 0 1rem' }}>
+          Error: {departmentMismatch ? departmentMismatchMessage : error}
+        </p>
+      )}
+      {notice && !departmentMismatch && <p style={{ color: '#1a7a1a', fontSize: '1.2rem', margin: '0 0 1rem' }}>{notice}</p>}
 
       <section>
-        <h2>Requests</h2>
-        {requests.length === 0 && <p>No requests yet.</p>}
+        <h2 style={{ fontSize: '1.7rem', margin: '0 0 0.5rem', fontWeight: 700 }}>Requests</h2>
+        {requests.length === 0 && <p style={{ fontSize: '1rem', margin: 0 }}>No requests yet.</p>}
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {requests.map((r) => (
-            <li key={r.id} style={{ border: '1px solid #eee', borderRadius: 8, padding: 12, marginBottom: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <strong>{r.title}</strong>
-                <span>
-                  {r.department} · <em>{r.status}</em>
-                </span>
-              </div>
-              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                <button disabled={r.status !== 'submitted'} onClick={() => onStart(r.id)}>
-                  Start
-                </button>
-                <button disabled={r.status !== 'in_progress'} onClick={() => onResolve(r.id)}>
-                  Resolve
-                </button>
-              </div>
-            </li>
+            (() => {
+              const resolvedEvent = r.history.find((event) => event.status === 'resolved');
+
+              return (
+                <li key={r.id} style={{ border: '1px solid #eee', borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <strong>{r.title}</strong>
+                    <span>
+                      {r.department} · <em>{r.status}</em>
+                    </span>
+                  </div>
+                  <div style={{ marginTop: 6, color: '#666', fontSize: 14 }}>
+                    Created: {formatDateTime(r.createdAt)}
+                  </div>
+                  {resolvedEvent && (
+                    <div style={{ marginTop: 4, color: '#1a7a1a', fontSize: 14 }}>
+                      Resolved: {formatDateTime(resolvedEvent.changedAt)}
+                    </div>
+                  )}
+                  <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                    <button disabled={r.status !== 'submitted'} onClick={() => onStart(r.id)}>
+                      Start
+                    </button>
+                    <button disabled={r.status !== 'in_progress'} onClick={() => onResolve(r.id)}>
+                      Resolve
+                    </button>
+                  </div>
+                </li>
+              );
+            })()
           ))}
         </ul>
       </section>
