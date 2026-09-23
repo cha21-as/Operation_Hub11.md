@@ -66,6 +66,28 @@ Expected failure, handled on purpose — `404`:
 { "statusCode": 404, "message": "Request <id> not found", "error": "Not Found" }
 ```
 
+### `DELETE /requests/:id`, `DELETE /requests/bulk`, and `POST /requests/undo`
+
+Requests use a soft-delete workflow so the UI can restore the most recent deletion without losing status history.
+
+Single delete:
+```json
+DELETE /requests/<id>
+```
+
+Bulk delete:
+```json
+{ "ids": ["<id-1>", "<id-2>"] }
+```
+
+Undo/restore:
+```json
+POST /requests/undo
+{ "ids": ["<id-1>", "<id-2>"] }
+```
+
+Normal `GET /requests` results exclude soft-deleted requests. The frontend also provides a department filter, a **View** ticket modal, and direct manual submission without AI.
+
 ### `POST /requests/:id/start` and `POST /requests/:id/resolve`
 
 No body. Identity is sent via headers (see below).

@@ -37,6 +37,7 @@ The company wants one system where employees can submit these requests, departme
 # Functional Requirements
 
 - Allow an employee to submit a request for help in a structured way (not just free-text messaging).
+- Allow an employee to describe a need in free text and receive an advisory, bounded candidate for department and approval context before submission.
 - Route or categorize each request to the correct department (IT, HR, or Finance).
 - Assign clear ownership of each request once submitted.
 - Track and expose the status of a request (e.g. submitted, in progress, awaiting approval, completed) so both the employee and the handling department can see it.
@@ -61,7 +62,7 @@ The company wants one system where employees can submit these requests, departme
 
 **Constraints:**
 - No frontend, backend, database, or API design work exists yet — this document defines the problem and requirements only.
-- No architecture diagrams, AI features, or system design decisions are being made at this stage.
+- This product spec does not prescribe a model vendor or detailed system design; the v0.4 intake capability is defined separately in `docs/week4-production-ai.md`.
 - No Git repository has been created yet.
 
 **Unknowns:**
@@ -74,7 +75,7 @@ The company wants one system where employees can submit these requests, departme
 # Non-Goals
 
 - This spec does not define the frontend, backend, database schema, or APIs for the hub.
-- This spec does not include AI-assisted request classification or routing — routing logic beyond "assign to a department" is undefined at this stage.
+- AI assistance is advisory only; the backend validates product-owned departments and approval rules, and the employee remains the final reviewer before submission.
 - This spec does not define architecture diagrams or technical system design.
 - This spec does not cover departments beyond IT, HR, and Finance unless added later.
 - This spec does not define detailed approval workflows (e.g. multi-step approval chains) beyond noting that some requests require approval.
@@ -89,7 +90,7 @@ A draft of this spec is ready when another student, with no prior context, can r
 4. **What is definitely known?** Requests come from three departments today (IT, HR, Finance); some requests need approval and some don't; the core pain is lack of shared visibility into ownership and status.
 5. **What is still unknown?** Cross-department requests, backup approvers, overdue-request handling, and whether notifications are required.
 6. **What assumptions did you make?** IT/HR/Finance are the initial department scope; each request has one owning department; employees are already identifiable in the system.
-7. **What are you deliberately not solving?** Frontend/backend implementation, database/API design, AI-based routing, architecture, and multi-step approval workflows.
+7. **What are you deliberately not solving?** Autonomous AI routing, model-vendor integration, detailed approval workflows, and other departments beyond IT, HR, and Finance.
 8. **What are a few examples of correct behavior?**
    - An employee submits "My laptop has a problem" → it is routed to IT, given an owner, and shows status "in progress" until resolved.
    - An employee submits "I need approval for a work expense" → it goes to Finance and sits in an "awaiting approval" state until an approver acts on it.

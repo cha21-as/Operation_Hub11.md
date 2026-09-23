@@ -2,6 +2,7 @@ import { RequestsService } from './requests.service';
 import { RequestStatus } from './request-status.enum';
 import { Department } from './department.enum';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { LocalAiIntakeProvider } from './ai-intake.provider';
 
 /**
  * Fakes the two repositories with plain in-memory arrays so this test
@@ -36,7 +37,7 @@ describe('RequestsService — business rules', () => {
   beforeEach(() => {
     requestsRepo = makeFakeRepo();
     eventsRepo = makeFakeRepo();
-    service = new RequestsService(requestsRepo as any, eventsRepo as any);
+    service = new RequestsService(requestsRepo as any, eventsRepo as any, new LocalAiIntakeProvider());
   });
 
   it('creates a request in SUBMITTED status', async () => {
@@ -110,5 +111,14 @@ describe('RequestsService — business rules', () => {
         department: Department.IT,
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('soft deletes a request and restores it for undo', async () => {
+    const request = await service.create('Laptop wont turn on', Department.IT);
+    await service.delete(request.id);
+    expect((requestsRepo.rows[0] as any).deletedAt).toBeInstanceOf(Date);
+
+    await service.restoreMany([request.id]);
+    expect((requestsRepo.rows[0] as any).deletedAt).toBeNull();
   });
 });

@@ -57,6 +57,20 @@ describe('Service Request flow (e2e)', () => {
       .expect(400);
   });
 
+  it('returns a bounded advisory candidate from employee free text', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/requests/intake')
+      .send({ freeText: 'I need approval for a work expense' })
+      .expect(201);
+
+    expect(res.body).toMatchObject({
+      department: 'FINANCE',
+      requiresApproval: true,
+      confidence: 'high',
+    });
+    expect(res.body.title).toBe('I need approval for a work expense');
+  });
+
   it('creates a valid request and returns the API contract shape', async () => {
     const res = await request(app.getHttpServer())
       .post('/requests')
@@ -70,6 +84,39 @@ describe('Service Request flow (e2e)', () => {
     });
     expect(res.body.id).toEqual(expect.any(String));
     requestId = res.body.id;
+  });
+
+  it('deletes one request, deletes a batch, and restores them with undo', async () => {
+    const first = await request(app.getHttpServer())
+      .post('/requests')
+      .send({ title: 'Delete this request', department: 'IT' })
+      .expect(201);
+    const second = await request(app.getHttpServer())
+      .post('/requests')
+      .send({ title: 'Delete this one too', department: 'HR' })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(`/requests/${first.body.id}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .delete('/requests/bulk')
+      .send({ ids: [second.body.id] })
+      .expect(200);
+
+    const visible = await request(app.getHttpServer()).get('/requests').expect(200);
+    expect(visible.body.map((item: any) => item.id)).not.toEqual(
+      expect.arrayContaining([first.body.id, second.body.id]),
+    );
+
+    await request(app.getHttpServer())
+      .post('/requests/undo')
+      .send({ ids: [first.body.id, second.body.id] })
+      .expect(201);
+
+    await request(app.getHttpServer()).get(`/requests/${first.body.id}`).expect(200);
+    await request(app.getHttpServer()).get(`/requests/${second.body.id}`).expect(200);
   });
 
   it('AUTHORIZATION — denies an employee from starting their own request (403)', async () => {

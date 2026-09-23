@@ -1,16 +1,18 @@
 import {
+  Inject,
   Injectable,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { ServiceRequest } from './entities/service-request.entity';
 import { StatusEvent } from './entities/status-event.entity';
 import { RequestStatus } from './request-status.enum';
 import { Department } from './department.enum';
 import { Actor } from './current-actor.decorator';
+import { AI_INTAKE_PROVIDER, AiIntakeProvider, IntakeCandidate } from './ai-intake.types';
 
 // Only these transitions are allowed. Anything not listed here is invalid.
 //
@@ -30,7 +32,37 @@ export class RequestsService {
     private readonly requests: Repository<ServiceRequest>,
     @InjectRepository(StatusEvent)
     private readonly events: Repository<StatusEvent>,
+    @Inject(AI_INTAKE_PROVIDER)
+    private readonly aiIntake: AiIntakeProvider,
   ) {}
+
+  async suggestFromFreeText(freeText: string): Promise<IntakeCandidate> {
+    const candidate = await this.aiIntake.classify(freeText);
+
+    if (!candidate || typeof candidate !== 'object') {
+      throw new BadRequestException('AI returned an invalid candidate');
+    }
+    if (typeof candidate.title !== 'string' || !candidate.title.trim() || candidate.title.length > 200) {
+      throw new BadRequestException('AI returned an invalid title');
+    }
+    if (candidate.department !== null && !Object.values(Department).includes(candidate.department)) {
+      throw new BadRequestException('AI returned an invalid department');
+    }
+    if (typeof candidate.requiresApproval !== 'boolean') {
+      throw new BadRequestException('AI returned an invalid approval flag');
+    }
+    if (!['high', 'medium', 'low'].includes(candidate.confidence)) {
+      throw new BadRequestException('AI returned an invalid confidence');
+    }
+    if (typeof candidate.rationale !== 'string' || !candidate.rationale.trim()) {
+      throw new BadRequestException('AI returned an invalid rationale');
+    }
+    if (candidate.department === Department.FINANCE && !candidate.requiresApproval) {
+      throw new BadRequestException('Finance requests require approval');
+    }
+
+    return { ...candidate, confidence: 'high' };
+  }
 
   async create(title: string, department: Department): Promise<ServiceRequest> {
     const request = this.requests.create({
@@ -53,11 +85,11 @@ export class RequestsService {
   }
 
   findAll(): Promise<ServiceRequest[]> {
-    return this.requests.find({ order: { createdAt: 'DESC' } });
+    return this.requests.find({ where: { deletedAt: IsNull() }, order: { createdAt: 'DESC' } });
   }
 
   async findOne(id: string): Promise<ServiceRequest> {
-    const request = await this.requests.findOne({ where: { id } });
+    const request = await this.requests.findOne({ where: { id, deletedAt: IsNull() } });
     // Expected failure, handled on purpose: a missing request is a normal
     // outcome (bad id, deleted, typo) — not a crash. It is surfaced as a
     // clean 404, not an unhandled database/undefined error.
@@ -103,5 +135,31 @@ export class RequestsService {
     );
 
     return this.findOne(id);
+  }
+
+  async delete(id: string): Promise<ServiceRequest> {
+    const request = await this.findOne(id);
+    request.deletedAt = new Date();
+    return this.requests.save(request);
+  }
+
+  async deleteMany(ids: string[]): Promise<ServiceRequest[]> {
+    const deleted: ServiceRequest[] = [];
+    for (const id of ids) {
+      deleted.push(await this.delete(id));
+    }
+    return deleted;
+  }
+
+  async restoreMany(ids: string[]): Promise<ServiceRequest[]> {
+    const restored: ServiceRequest[] = [];
+    for (const id of ids) {
+      const request = await this.requests.findOne({ where: { id } });
+      if (request?.deletedAt) {
+        request.deletedAt = null;
+        restored.push(await this.requests.save(request));
+      }
+    }
+    return restored;
   }
 }

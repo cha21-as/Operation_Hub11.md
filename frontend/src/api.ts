@@ -20,6 +20,14 @@ export interface ServiceRequest {
   history: StatusEvent[];
 }
 
+export interface IntakeCandidate {
+  title: string;
+  department: Department | null;
+  requiresApproval: boolean;
+  confidence: 'high' | 'medium' | 'low';
+  rationale: string;
+}
+
 export interface Actor {
   role: 'employee' | 'staff';
   department: Department | null;
@@ -64,6 +72,15 @@ export async function createRequest(title: string, department: Department): Prom
   return handle(res);
 }
 
+export async function suggestRequest(freeText: string): Promise<IntakeCandidate> {
+  const res = await fetch(`${API_BASE}/requests/intake`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ freeText }),
+  });
+  return handle(res);
+}
+
 export async function startRequest(id: string, actor: Actor): Promise<ServiceRequest> {
   const res = await fetch(`${API_BASE}/requests/${id}/start`, {
     method: 'POST',
@@ -76,6 +93,29 @@ export async function resolveRequest(id: string, actor: Actor): Promise<ServiceR
   const res = await fetch(`${API_BASE}/requests/${id}/resolve`, {
     method: 'POST',
     headers: actorHeaders(actor),
+  });
+  return handle(res);
+}
+
+export async function deleteRequest(id: string): Promise<ServiceRequest> {
+  const res = await fetch(`${API_BASE}/requests/${id}`, { method: 'DELETE' });
+  return handle(res);
+}
+
+export async function deleteRequests(ids: string[]): Promise<ServiceRequest[]> {
+  const res = await fetch(`${API_BASE}/requests/bulk`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  });
+  return handle(res);
+}
+
+export async function restoreRequests(ids: string[]): Promise<ServiceRequest[]> {
+  const res = await fetch(`${API_BASE}/requests/undo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
   });
   return handle(res);
 }

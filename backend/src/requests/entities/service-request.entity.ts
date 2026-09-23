@@ -26,6 +26,9 @@ export class ServiceRequest {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column({ type: 'datetime', nullable: true })
+  deletedAt: Date | null;
+
   @OneToMany(() => StatusEvent, (event) => event.request, {
     cascade: true,
     eager: true,

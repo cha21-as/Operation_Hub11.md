@@ -53,6 +53,7 @@ This mirrors the ShopLite pattern: `Customer / Support` are people, `App/Web / B
 | Requirement | Responsibility it forces | Component |
 |---|---|---|
 | Employee must submit structured requests | Collect and validate request input | **App / Web** |
+| Employee may start from free text without surrendering authority | Produce and validate a bounded advisory candidate | **Hub Backend — AI Intake** |
 | Request must reach the correct department | Classify/route request to IT, HR, or Finance | **Hub Backend — Router** |
 | Every request needs a clear owner | Assign and record ownership | **Hub Backend — Ownership** |
 | Status must be visible to employee & department | Store and serve current request status | **Request Data** + **Hub Backend — Status Service** |
@@ -65,7 +66,7 @@ This mirrors the ShopLite pattern: `Customer / Support` are people, `App/Web / B
 
 ## Important Data Flows
 
-1. **Submit a request:** Employee → App/Web → Hub Backend (Router) → assigns department + owner → Request Data (status: `submitted`).
+1. **Suggest and submit a request:** Employee → App/Web → Hub Backend (AI Intake) → bounded candidate → employee review → Hub Backend (Router) → assigns department + owner → Request Data (status: `submitted`).
 2. **Approval path:** Hub Backend (Approval Workflow) sets status to `awaiting approval` → Approver acts → status updates to `approved`/`rejected` → if approved, continues to department handling.
 3. **Non-approval path:** Request goes directly from `submitted` to the owning department's queue (status: `in progress`).
 4. **Department handling:** Department Staff (via App/Web or their own tools) update the request through the Department Adapter → Hub Backend updates Request Data → status becomes `resolved`.
@@ -181,7 +182,7 @@ Per the assignment's scope for Thursday's architecture draft:
 - No code — no frontend or backend implementation.
 - No database tables, collections, or indexes.
 - No detailed endpoint schemas; no CI/CD or production infrastructure.
-- No AI features; no unnecessary microservices.
+- No model-specific vendor integration, autonomous submission, or unnecessary microservices.
 
 # Done = Explainable
 

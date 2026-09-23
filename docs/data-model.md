@@ -65,7 +65,10 @@ This is a decision, not a default (per *Relational vs Document Is a Decision, No
 **Durable vs. derived:**
 
 - **Durable (stored):** every `StatusEvent` (the full history), every `Approval` decision, core `Request` fields (id, requester, department, request type, created time).
-- **Derived (not separately stored):** "current status" is the most recent `StatusEvent` for a request — computed, not duplicated as a second source of truth, to avoid the two disagreeing.
+- **Durable (stored):** the request's current lifecycle status and nullable `deletedAt` marker are also stored for efficient queue reads and reversible soft deletion.
+- **Audit history:** `StatusEvent` records preserve the full status progression and actor details. The implemented slice also stores the current `Request.status` for queue reads and updates it together with each new event.
+
+The implemented slice currently stores both the current status and append-only status history; the service updates them together and the history remains the audit record. A non-null `deletedAt` hides a request from normal queue/detail reads while preserving the request and its history for Undo.
 
 ## Access
 
@@ -89,7 +92,7 @@ Checked against the four contradiction patterns called out in the slides, applie
 
 | Contradiction | Where it would bite | Resolution in this model |
 |---|---|---|
-| Spec needs history, but model stores only current state | `product-spec.md` requires status visibility over time; a single "status" field can't show progression | `StatusEvent` is a full append-only history; current status is derived, not the only record. |
+| Spec needs history, but model stores only current state | `product-spec.md` requires status visibility over time; a single "status" field can't show progression | `StatusEvent` is a full append-only history; the current `Request.status` is a synchronized queue-read projection, not the audit record. |
 | "Two approvals required" modeled as `approved: true/false` | Not currently a requirement — flagged as an open unknown in `product-spec.md`, not modeled as a boolean, so it isn't silently wrong if multi-step approval is added later | `Approval` is its own entity (one row per decision), so adding a second required approval later is an additive change, not a rewrite. |
 | Sensitive request, but architecture gives generic admin access | `product-spec.md` requires that only the owning department can act on a request | Authorization rules scope access to requester / owning department staff / named approver — no blanket "admin" role. |
 | Audit required, but no actor + time history exists | Approval and status changes must be explainable later | Every `StatusEvent` and `Approval` record includes who made the change and when, not just what the new value is. |
