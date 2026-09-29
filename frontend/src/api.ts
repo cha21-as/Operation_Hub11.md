@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:3000';
+const API_BASE =
+  import.meta.env.VITE_API_BASE ??
+  (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
 export type Department = 'IT' | 'HR' | 'FINANCE';
 export type RequestStatus = 'submitted' | 'in_progress' | 'resolved';
