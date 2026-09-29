@@ -4,9 +4,10 @@
   "private": true,
   "description": "Operations Hub frontend — submit a Service Request and (as staff) start it.",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --host 0.0.0.0 --port ${PORT:-4173}",
+    "start": "vite preview --host 0.0.0.0 --port ${PORT:-4173}"
   },
   "dependencies": {
     "react": "18.3.1",
