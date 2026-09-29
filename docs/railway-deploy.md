@@ -36,11 +36,13 @@ Add a second service to the same project.
 
 - Root directory: `frontend`
 - Build command: `npm install && npm run build`
-- Start command: `npx vite preview --host 0.0.0.0 --port $PORT`
+- Start command: `npm run start`
+- Set `PORT=4173` in the Railway service environment if needed
 
 Environment variables:
 
 ```bash
+PORT=4173
 VITE_API_BASE=https://your-backend-domain.up.railway.app
 ```
 
