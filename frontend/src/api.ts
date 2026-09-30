@@ -1,6 +1,8 @@
 const API_BASE =
   import.meta.env.VITE_API_BASE ??
-  (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+  (import.meta.env.DEV
+    ? 'http://localhost:3000'
+    : 'https://operation-hub11-backend.onrender.com');
 
 export type Department = 'IT' | 'HR' | 'FINANCE';
 export type RequestStatus = 'submitted' | 'in_progress' | 'resolved';
