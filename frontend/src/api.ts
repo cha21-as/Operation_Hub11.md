@@ -1,8 +1,10 @@
+const configuredApiBase = import.meta.env.VITE_API_BASE;
 const API_BASE =
-  import.meta.env.VITE_API_BASE ??
-  (import.meta.env.DEV
-    ? 'http://localhost:3000'
-    : 'https://operation-hub11-backend.onrender.com');
+  configuredApiBase && configuredApiBase !== 'https://your-backend-url.onrender.com'
+    ? configuredApiBase
+    : import.meta.env.DEV
+      ? 'http://localhost:3000'
+      : 'https://operation-hub11-backend.onrender.com';
 
 export type Department = 'IT' | 'HR' | 'FINANCE';
 export type RequestStatus = 'submitted' | 'in_progress' | 'resolved';
